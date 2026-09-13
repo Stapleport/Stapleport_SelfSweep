@@ -1,0 +1,40 @@
+# SweepPay_SelfSweep 本地开发配置
+# cp .dev.vars.example .dev.vars （.dev.vars 已 gitignore，绝不提交）
+
+# ---- 私钥（唯一密钥项，走 secret/.dev.vars，绝不放 wrangler.jsonc vars）----
+# 下面是 hardhat/anvil 公开测试私钥（acct0），只能用于本地 31337 链！
+# 生产请生成专用新地址：openssl rand -hex 32（前面加 0x），只放 gas，定期扫出。
+SWEEP_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+
+# ---- 链与合约 ----
+# 逗号分隔 chainId；每条链的 rpc/imputations 默认读 registry.json，
+# 可用 RPC_URL_<chainId> / IMPUTATIONS_<chainId> 覆盖（registry 外的自部署链必须用覆盖）
+CHAIN_IDS=31337
+# RPC_URL_31337=http://127.0.0.1:8545
+# IMPUTATIONS_31337=0x528749edd316c3734680889982B278A83b07EB29
+
+# ---- 归集目标 ----
+# 国库地址（通道归属者；本地测试可用 hardhat acct1）
+TREASURY=0x70997970C51812dc3A010C7d01b50e0d17dc79C8
+# 通道号段：order = `${CHANNEL_SECRET}-${6位补零编号}`，与网页「密语-编号」完全一致
+CHANNEL_SECRET=260825
+CHANNEL_FROM=1
+CHANNEL_TO=20
+# 或显式列通道全名（逗号分隔，优先于号段）：CHANNEL_ORDERS=shop-000001,shop-000002
+
+# ---- 币种与阈值 ----
+# JSON：token → 触发归集的人类可读阈值。给哪个币设了阈值就归集哪个币：
+# "native" 表示原生币，其余键为 ERC20 地址（按链上 decimals 换算，运行时自动读 decimals()）。
+# 例：MIN_SWEEP={"native":"0.01","0x3c74E57fE97c2b8e36A989deDB80Ec32a52C4fD0":"100"}
+MIN_SWEEP={"native":"0.01"}
+
+# ---- 行为 ----
+# 盈利安全边际 ×1.2（原生币净额 ≥ gas×价格×1.2 才出手；纯 ERC20 组只看阈值）
+GAS_BUFFER_X10=12
+# 每 tick 每链最多广播几笔（模板只做 1 笔多币种打包）
+MAX_TX_PER_TICK=1
+TICK_LOCK_SECONDS=55
+# true = 只打印将发的交易，不广播
+DRY_RUN=false
+# 可选：到账/归集通知 webhook（POST JSON）；需同时绑定 STATE KV 才有到账事件
+WEBHOOK_URL=

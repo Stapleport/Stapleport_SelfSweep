@@ -1,0 +1,58 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sweeppay-selfsweep",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-08-01",
+
+  // 零公网面：只有 cron 触发 + GET /health。归集 Worker 不需要任何入站路由。
+  "workers_dev": false,
+
+  // 每 5 分钟一轮：监控到账（可选）→ 阈值判定 → imputationall 归集。想要更快改 "*/1"。
+  "triggers": {
+    "crons": ["*/5 * * * *"]
+  },
+
+  // 公开配置（非敏感）。密钥只有一把 SWEEP_PRIVATE_KEY，走 wrangler secret，绝不放这里：
+  //   wrangler secret put SWEEP_PRIVATE_KEY
+  "vars": {
+    // ---- 链与合约（逗号分隔 chainId；rpc/imputations 默认读 registry.json，
+    //      可用 RPC_URL_<id> / IMPUTATIONS_<id> 覆盖；registry 外的自部署链必须用覆盖）----
+    "CHAIN_IDS": "7156777",
+
+    // ---- 归集目标 ----
+    // 国库地址（通道归属者，必填才工作）
+    "TREASURY": "",
+    // 通道号段：order = `${CHANNEL_SECRET}-${6位补零编号}`，与网页「密语-编号」完全一致
+    "CHANNEL_SECRET": "260825",
+    "CHANNEL_FROM": "1",
+    "CHANNEL_TO": "20",
+    // 或显式列通道全名（逗号分隔，优先于号段）：如 "shop-000001,shop-000002"
+    "CHANNEL_ORDERS": "",
+
+    // ---- 币种与阈值 ----
+    // JSON：token → 触发归集的人类可读阈值。给哪个币设了阈值就归集哪个币：
+    // "native" 表示原生币，其余键为 ERC20 地址（阈值按链上 decimals 换算，运行时自动读）。
+    // 注意：激活通道的原生币到账即被合约 97/3 自动分发回国库，本 Worker 的主战场是 ERC20
+    "MIN_SWEEP": "{\"native\":\"0.01\"}",
+
+    // ---- 行为 ----
+    // 盈利安全边际 ×1.2（原生币净额 ≥ gas×价格×buffer 才出手；纯 ERC20 组只看阈值）
+    "GAS_BUFFER_X10": "12",
+    // 每 tick 每链最多广播几笔（模板只做 1 笔多币种打包）
+    "MAX_TX_PER_TICK": "1",
+    // tick 内存锁：防止重叠执行（cron 5 分钟一轮，55s 足够；本地联调可调小）
+    "TICK_LOCK_SECONDS": "55",
+    // true = 只打印将发的交易，不广播
+    "DRY_RUN": "false",
+    // 可选：到账/归集通知 webhook（POST JSON）。到账事件需同时绑定下面的 STATE KV
+    "WEBHOOK_URL": ""
+  },
+
+  // ---- 可选：状态 KV（不绑 = 纯无状态模式，照样归集，只是没有到账通知）----
+  // 绑定后用于：到账基线快照（received 只增不减，做差判到账）+ 归集流水。
+  // 需要到账通知时：`wrangler kv namespace create STATE` 把返回的 id 填进来再 deploy；
+  // 保持注释 = 纯无状态模式（零绑定，一键部署即用）
+  // "kv_namespaces": [
+  //   { "binding": "STATE", "id": "<wrangler kv namespace create STATE 返回的 id>" }
+  // ]
+}
