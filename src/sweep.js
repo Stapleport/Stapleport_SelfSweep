@@ -1,5 +1,5 @@
 // 归集执行：查余额 → 阈值判定 → estimateGas 预检 → 本地签名 → 广播。
-// 预检/签名/广播流程改造自 SweepPay_Executor/src/worker.js scanChain（同款口径），
+// 预检/签名/广播流程改造自 Stapleport_Executor/src/worker.js scanChain（同款口径），
 // 差别：没有榜单——候选就是自己配置的通道号段；方法固定 imputationall（自归集，
 // helper 份额不存在「赚回扣」一说，见 README 经济账）。
 import { privateKeyToAccount } from 'viem/accounts';

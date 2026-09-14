@@ -1,4 +1,4 @@
-# SweepPay_SelfSweep 本地开发配置
+# Stapleport_SelfSweep 本地开发配置
 # cp .dev.vars.example .dev.vars （.dev.vars 已 gitignore，绝不提交）
 
 # ---- 私钥（唯一密钥项，走 secret/.dev.vars，绝不放 wrangler.jsonc vars）----

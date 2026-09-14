@@ -1,4 +1,4 @@
-// SweepPay_SelfSweep 入口：cron 触发归集 tick；HTTP 只留 /health 一条只读状态路由。
+// Stapleport_SelfSweep 入口：cron 触发归集 tick；HTTP 只留 /health 一条只读状态路由。
 // 本 Worker 是自建者自己的签名核：私钥只进 wrangler secret / .dev.vars，零公网面（workers_dev:false）。
 import { privateKeyToAccount } from 'viem/accounts';
 import { loadConfig } from './config.js';

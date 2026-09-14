@@ -1,9 +1,9 @@
 {
-  "name": "sweeppay-selfsweep",
+  "name": "stapleport-selfsweep",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "SweepPay 自托管归集 Worker：只用 Imputations 合约，cron 自动监控到账→阈值判定→imputationall 归集→webhook 通知。零后端依赖（无 API/Manager/Supabase）。",
+  "description": "Stapleport 自托管归集 Worker：只用 Imputations 合约，cron 自动监控到账→阈值判定→imputationall 归集→webhook 通知。零后端依赖（无 API/Manager/Supabase）。",
   "scripts": {
     "dev": "wrangler dev --test-scheduled",
     "deploy": "wrangler deploy",

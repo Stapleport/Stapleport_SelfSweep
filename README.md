@@ -1,14 +1,14 @@
-# SweepPay SelfSweep
+# Stapleport SelfSweep
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/SweepPay/SweepPay_SelfSweep)
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Stapleport/Stapleport_SelfSweep)
 
 **[English](#english) | [中文](#中文)**
 
-An unattended auto-collection (sweep) worker for SweepPay merchants: it watches your payment channels on a schedule, and sweeps balances to your treasury once a per-token threshold is met — using **only the Imputations contract**. Your key, your worker: no SweepPay API, no backend, no database.
+An unattended auto-collection (sweep) worker for Stapleport merchants: it watches your payment channels on a schedule, and sweeps balances to your treasury once a per-token threshold is met — using **only the Imputations contract**. Your key, your worker: no Stapleport API, no backend, no database.
 
 Where the official product has an executor sweep for you, SelfSweep lets you be your own executor with one Cloudflare Worker on the free tier.
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/SweepPay/SweepPay_SelfSweep)
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Stapleport/Stapleport_SelfSweep)
 
 **One click deploys the worker** to your Cloudflare account (free tier). It then idles safely until you configure three things — treasury, channel range, thresholds — and add one secret (the sweep key). Start with `DRY_RUN=true`, read the logs, then flip it off.
 
@@ -26,7 +26,7 @@ Where the official product has an executor sweep for you, SelfSweep lets you be 
 - **Arrival monitor + webhook** (optional) — bind a KV namespace and every fresh deposit is detected (monotonic `received` baseline diff) and pushed to your webhook, along with sweep sent/confirmed/failed events.
 - **Stateless core** — no KV needed for sweeping: a failed transaction simply retries next tick. Zero bindings deploy and work.
 - **Zero public surface** — `workers_dev: false`, no inbound routes at all; the only trigger is the cron schedule.
-- **Channel model identical to the web app** — channels are `secret-6-digit-number` orders (path = `keccak256`), the exact same convention as the SweepPay web frontend.
+- **Channel model identical to the web app** — channels are `secret-6-digit-number` orders (path = `keccak256`), the exact same convention as the Stapleport web frontend.
 
 ### How it works (each tick)
 
@@ -39,7 +39,7 @@ Where the official product has an executor sweep for you, SelfSweep lets you be 
 
 - **Whose contract you point at decides where the 3% goes.** `imputationall` deducts three fees from the swept amount: owner 0.5% + helper 1.5% + affiliate 1% (3% total).
   - **Official Imputations contract**: the 3% goes to the protocol. You net 97% − gas. Zero deployment effort, and while the contract's free-quota window is open (fewer than 5 lifetime collects **and** fewer than 30 lifetime paid channels) **all fees are waived**.
-  - **Your own Imputations deployment** (you are the owner): all 3% flows back to you — net cost is gas only. Deploy via `ImputationsBatchDeployer` (two transactions) or the hardhat scripts in `SweepPay_hardhat/scripts/Imputations/`. SelfSweep doesn't care: point `IMPUTATIONS_<chainId>` at whichever address; rates are read live per tick.
+  - **Your own Imputations deployment** (you are the owner): all 3% flows back to you — net cost is gas only. Deploy via `ImputationsBatchDeployer` (two transactions) or the hardhat scripts in `Stapleport_hardhat/scripts/Imputations/`. SelfSweep doesn't care: point `IMPUTATIONS_<chainId>` at whichever address; rates are read live per tick.
 - **Native coin is already automatic.** Once a channel is activated (first sweep registers it), every native-coin arrival is split 97/3 on the spot by the wallet contract's `receive()` hook — activated native channels always sit at zero. SelfSweep's real value is **ERC20** (which waits for a sweep), **timing** (thresholds amortize gas) and **notifications**.
 - **Affiliate 1%**: unbound affiliates are pinned to "share goes to owner" on first collect. On the official contract that 1% goes to the protocol anyway; on your own deployment it comes back to you — nothing to configure.
 - **Monitoring is poll-based.** The contract emits no Deposit event (only the opt-in `CollectEventMode` mode and LongSystemLog entries). The official API polls balances too.
@@ -85,13 +85,13 @@ Everything lives in `wrangler.jsonc` vars (public, non-sensitive) + one secret. 
 | `RPC_URL_<chainId>` | | Override the RPC of that chain (required for chains not in the registry) |
 | `IMPUTATIONS_<chainId>` | | Override that chain's Imputations address (your own deployment / non-registry chains) |
 
-Default chain metadata (rpc/Imputations addresses) comes from `registry.json`, the same artifact other SweepPay components sync from `SweepPay_hardhat/deployments/all.json`. Your own deployments join via the two override variables — no need to touch the registry.
+Default chain metadata (rpc/Imputations addresses) comes from `registry.json`, the same artifact other Stapleport components sync from `Stapleport_hardhat/deployments/all.json`. Your own deployments join via the two override variables — no need to touch the registry.
 
 **KV (optional).** Default is commented out = fully stateless mode; sweeping works, you just don't get arrival notifications. To enable: `wrangler kv namespace create STATE`, put the returned id into `kv_namespaces` in `wrangler.jsonc`, redeploy.
 
 ### Notifications
 
-With `WEBHOOK_URL` set, the worker POSTs JSON `{ "source": "sweeppay-selfsweep", "at": ..., ...event }`:
+With `WEBHOOK_URL` set, the worker POSTs JSON `{ "source": "stapleport-selfsweep", "at": ..., ...event }`:
 
 | event | meaning | needs KV |
 |---|---|---|
@@ -113,7 +113,7 @@ curl http://localhost:8787/health                         # runtime status
 npm test                         # unit tests (config parsing, pure functions)
 ```
 
-Full-loop against a local chain: start a hardhat node and deploy Imputations from `SweepPay_hardhat`, then point `.dev.vars` at it (`CHAIN_IDS=31337` + `RPC_URL_31337` + `IMPUTATIONS_31337`). `scripts/dev-setup.mjs <imputations> <treasury> [ETH]` funds the well-known test key via `hardhat_setBalance` and pays a channel. Note `wrangler dev` does **not** hot-reload `.dev.vars` — restart to apply config changes.
+Full-loop against a local chain: start a hardhat node and deploy Imputations from `Stapleport_hardhat`, then point `.dev.vars` at it (`CHAIN_IDS=31337` + `RPC_URL_31337` + `IMPUTATIONS_31337`). `scripts/dev-setup.mjs <imputations> <treasury> [ETH]` funds the well-known test key via `hardhat_setBalance` and pays a channel. Note `wrangler dev` does **not** hot-reload `.dev.vars` — restart to apply config changes.
 
 ### Project Structure
 
@@ -128,7 +128,7 @@ Full-loop against a local chain: start a hardhat node and deploy Imputations fro
 │       ├── tx.js          # Imputations calldata encoding + read calls
 │       ├── rpc.js         # JSON-RPC fetch wrapper (the only sendRawTransaction caller)
 │       └── imputations.js # pure helpers: order→path, arg building, decode (same as the web app)
-├── registry.json          # chain registry (synced from SweepPay_hardhat deployments)
+├── registry.json          # chain registry (synced from Stapleport_hardhat deployments)
 ├── scripts/dev-setup.mjs  # local E2E helper: fund test key + pay a channel
 ├── test/config.test.mjs   # unit tests (node --test)
 └── wrangler.jsonc         # Cloudflare Workers config (all public vars)
@@ -153,11 +153,11 @@ Full-loop against a local chain: start a hardhat node and deploy Imputations fro
 
 ## 中文
 
-一个给 SweepPay 商户用的无人值守自动归集 Worker：定时盯住你的收款通道，达到按币种设定的阈值就自动把余额归集到国库——**只用 Imputations 合约**。私钥在你手里、Worker 在你账号里：不依赖 SweepPay API、没有后端、没有数据库。
+一个给 Stapleport 商户用的无人值守自动归集 Worker：定时盯住你的收款通道，达到按币种设定的阈值就自动把余额归集到国库——**只用 Imputations 合约**。私钥在你手里、Worker 在你账号里：不依赖 Stapleport API、没有后端、没有数据库。
 
 官方产品里「托管执行者替你按归集按钮」，SelfSweep 让你用自己的一个免费版 Cloudflare Worker 当自己的执行者。
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/SweepPay/SweepPay_SelfSweep)
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Stapleport/Stapleport_SelfSweep)
 
 **一键把 Worker 部署到你的 Cloudflare 账号（免费版即可）。** 部署后它会安全空转，直到你配好三件事——国库、通道号段、阈值——并写入一把密钥（归集私钥）。先用 `DRY_RUN=true` 跑几轮看日志，确认无误再关掉。
 
@@ -169,7 +169,7 @@ Full-loop against a local chain: start a hardhat node and deploy Imputations fro
 - **到账监控 + webhook**（可选）：绑定 KV 后，新到账（`received` 只增不减口径做基线差）即时推送 webhook，归集的发送/成功/失败也有事件。
 - **核心无状态**：归集不依赖 KV——失败的交易下一 tick 自动重试；零绑定即可部署运行。
 - **零公网面**：`workers_dev: false`、没有任何入站路由，唯一触发方式是 cron。
-- **通道模型与网页完全一致**：通道 = `密语-6位编号`（path = keccak256），与 SweepPay 网页端同一套约定。
+- **通道模型与网页完全一致**：通道 = `密语-6位编号`（path = keccak256），与 Stapleport 网页端同一套约定。
 
 ### 每个 tick 做什么
 
@@ -182,7 +182,7 @@ Full-loop against a local chain: start a hardhat node and deploy Imputations fro
 
 - **指向谁的合约，决定 3% 归谁。** `imputationall` 从扫入额里扣三笔费：owner 0.5% + helper 1.5% + affiliate 1%（合计 3%）。
   - **官方 Imputations 合约**：3% 归协议方，你净得 97% − gas。零部署成本，且合约的**免费额度**窗口内（累计归集 < 5 次**且**累计付费通道 < 30 笔）三费全免。
-  - **自己部署的 Imputations**（owner = 你）：3% 全部回流自己，净成本只剩 gas。可用 `ImputationsBatchDeployer`（两笔交易）或 `SweepPay_hardhat/scripts/Imputations/` 的脚本部署。SelfSweep 不关心你指向谁：`IMPUTATIONS_<chainId>` 填哪个地址就按谁的走，费率每 tick 现读。
+  - **自己部署的 Imputations**（owner = 你）：3% 全部回流自己，净成本只剩 gas。可用 `ImputationsBatchDeployer`（两笔交易）或 `Stapleport_hardhat/scripts/Imputations/` 的脚本部署。SelfSweep 不关心你指向谁：`IMPUTATIONS_<chainId>` 填哪个地址就按谁的走，费率每 tick 现读。
 - **原生币其实已经自动了。** 通道首次归集即被合约登记激活，此后原生币到账会被钱包合约的 `receive()` 钩子当场 97/3 分发（激活通道的原生币余额恒为 0）。SelfSweep 的主战场是 **ERC20**（趴账等归集）、**归集时机**（阈值摊薄 gas）和**到账通知**。
 - **affiliate 1%**：不绑推荐人时，首次归集会把这 1% 固化为「归 owner」。官方合约下这 1% 本来就归协议方；自部署下它回流你自己——无需任何配置。
 - **监控只能轮询**：合约没有 Deposit 事件（只有可选的 `CollectEventMode` 事件模式和 LongSystemLog 链上日志），官方 API 同样选择轮询余额。
@@ -228,13 +228,13 @@ npm run deploy
 | `RPC_URL_<chainId>` | | 覆盖该链 RPC（registry 外的链必填） |
 | `IMPUTATIONS_<chainId>` | | 覆盖该链 Imputations 地址（自部署合约 / registry 外的链必填） |
 
-链的默认 rpc / Imputations 地址来自 `registry.json`（与其他 SweepPay 组件一样同步自 `SweepPay_hardhat/deployments/all.json`）。自部署合约或新链用两个覆盖变量接入，不必改 registry。
+链的默认 rpc / Imputations 地址来自 `registry.json`（与其他 Stapleport 组件一样同步自 `Stapleport_hardhat/deployments/all.json`）。自部署合约或新链用两个覆盖变量接入，不必改 registry。
 
 **KV（可选）**：默认注释掉 = 纯无状态模式，归集照常工作，只是没有到账通知。启用：`wrangler kv namespace create STATE`，把返回的 id 填进 `wrangler.jsonc` 的 `kv_namespaces` 再部署。
 
 ### 通知事件
 
-配了 `WEBHOOK_URL` 后，Worker 会 POST JSON `{ "source": "sweeppay-selfsweep", "at": ..., ...事件字段 }`：
+配了 `WEBHOOK_URL` 后，Worker 会 POST JSON `{ "source": "stapleport-selfsweep", "at": ..., ...事件字段 }`：
 
 | event | 含义 | 需要 KV |
 |---|---|---|
@@ -256,7 +256,7 @@ curl http://localhost:8787/health                         # 运行状态
 npm test                         # 单测（配置解析与纯函数）
 ```
 
-本地链全链路：起 hardhat 节点并从 `SweepPay_hardhat` 部署 Imputations，然后 `.dev.vars` 指向它（`CHAIN_IDS=31337` + `RPC_URL_31337` + `IMPUTATIONS_31337`）。`scripts/dev-setup.mjs <imputations> <treasury> [ETH]` 用 `hardhat_setBalance` 给公开测试私钥注资并向通道打款。注意 `wrangler dev` **不会**热加载 `.dev.vars`——改配置要重启。
+本地链全链路：起 hardhat 节点并从 `Stapleport_hardhat` 部署 Imputations，然后 `.dev.vars` 指向它（`CHAIN_IDS=31337` + `RPC_URL_31337` + `IMPUTATIONS_31337`）。`scripts/dev-setup.mjs <imputations> <treasury> [ETH]` 用 `hardhat_setBalance` 给公开测试私钥注资并向通道打款。注意 `wrangler dev` **不会**热加载 `.dev.vars`——改配置要重启。
 
 ### 项目结构
 
@@ -271,7 +271,7 @@ npm test                         # 单测（配置解析与纯函数）
 │       ├── tx.js          # Imputations calldata 编码 + 只读调用
 │       ├── rpc.js         # JSON-RPC 封装（全仓唯一 sendRawTransaction 调用方）
 │       └── imputations.js # 纯函数：order→path、参数组装、解码（与网页端同款）
-├── registry.json          # 链注册表（同步自 SweepPay_hardhat 部署产物）
+├── registry.json          # 链注册表（同步自 Stapleport_hardhat 部署产物）
 ├── scripts/dev-setup.mjs  # 本地 E2E：注资测试私钥 + 给通道打款
 ├── test/config.test.mjs   # 单测（node --test）
 └── wrangler.jsonc         # Cloudflare Workers 配置（全部为公开 vars）

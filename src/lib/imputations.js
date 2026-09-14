@@ -1,5 +1,5 @@
 // Imputations 合约参数组装 / 解码（纯函数，viem 编解码语义）。
-// 改造自 SweepPay_Web_newui/src/core/imputations.js（前端批量面板同款算法），
+// 改造自 Stapleport_Web_newui/src/core/imputations.js（前端批量面板同款算法），
 // 保证与网页「密语-编号」通道完全对上账。
 import { keccak256, toBytes } from 'viem';
 import registry from '../../registry.json' with { type: 'json' };
