@@ -73,7 +73,7 @@ Everything lives in `wrangler.jsonc` vars (public, non-sensitive) + one secret. 
 |---|---|---|
 | `SWEEP_PRIVATE_KEY` | ✅ secret | Hot-wallet private key. Signs sweep transactions only, exists only in memory at runtime. `wrangler secret put SWEEP_PRIVATE_KEY` |
 | `TREASURY` | ✅ | Treasury address (the owner of the channels; swept funds land here) |
-| `CHAIN_IDS` | ✅ | Comma-separated chainIds, e.g. `"56,7156777"` |
+| `CHAIN_IDS` | ✅ | Comma-separated chainIds, e.g. `"56,78753"` |
 | `CHANNEL_SECRET` / `CHANNEL_FROM` / `CHANNEL_TO` | pick one | Channel range: order = `secret-6-digit-number`, identical to the web app's "secret-number" channels |
 | `CHANNEL_ORDERS` | pick one | Explicit full order names, comma-separated; takes precedence over the range |
 | `MIN_SWEEP` | | JSON: token → human-readable threshold. `"native"` = native coin, other keys = ERC20 addresses (decimals are read from the chain at runtime). **Only tokens with a threshold are swept.** Default `{"native":"0.01"}` |
@@ -216,7 +216,7 @@ npm run deploy
 |---|---|---|
 | `SWEEP_PRIVATE_KEY` | ✅（secret） | 热钱包私钥。只签名归集交易，只在运行时内存出现。`wrangler secret put SWEEP_PRIVATE_KEY` |
 | `TREASURY` | ✅ | 国库地址（通道归属者，归集资金最终回到这里） |
-| `CHAIN_IDS` | ✅ | 逗号分隔 chainId，如 `"56,7156777"` |
+| `CHAIN_IDS` | ✅ | 逗号分隔 chainId，如 `"56,78753"` |
 | `CHANNEL_SECRET` / `CHANNEL_FROM` / `CHANNEL_TO` | 二选一 | 通道号段：order = `密语-6位补零编号`，与网页「密语-编号」完全一致 |
 | `CHANNEL_ORDERS` | 二选一 | 显式列通道全名（逗号分隔），优先于号段 |
 | `MIN_SWEEP` | | JSON：token → 人类可读阈值。`"native"` 表示原生币，其余键为 ERC20 地址（decimals 运行时从链上读）。**给谁设了阈值才归集谁**。默认 `{"native":"0.01"}` |

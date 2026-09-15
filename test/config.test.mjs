@@ -53,13 +53,13 @@ test('loadConfig：空串回落 + treasury 归一化', () => {
   const good = '0x70997970C51812dc3A010C7d01b50e0d17dc79C8';
   const cfg = loadConfig({
     TREASURY: good,
-    CHAIN_IDS: '31337, 7156777',
+    CHAIN_IDS: '31337, 78753',
     MIN_SWEEP: '{"native":"0.5"}',
     IMPUTATIONS_31337: '0x528749edd316c3734680889982B278A83b07EB29',
     IMPUTATIONS_999: 'not-an-address', // 非法 → 覆盖无效
   });
   assert.equal(cfg.treasury, good.toLowerCase());
-  assert.deepEqual(cfg.chainIds, ['31337', '7156777']);
+  assert.deepEqual(cfg.chainIds, ['31337', '78753']);
   assert.equal(cfg.minSweep.get(NATIVE), '0.5');
   assert.equal(cfg.imputations('31337'), '0x528749edd316c3734680889982B278A83b07EB29');
   assert.equal(cfg.imputations('999'), null);

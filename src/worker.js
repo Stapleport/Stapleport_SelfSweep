@@ -28,7 +28,7 @@ export default {
       const cfg = loadConfig(env);
       return Response.json({
         ok: true,
-        service: 'sweeppay-selfsweep',
+        service: 'stapleport-selfsweep',
         configured: Boolean(cfg.treasury) && cfg.orders.length > 0,
         treasury: cfg.treasury,
         chains: cfg.chainIds,

@@ -7,7 +7,7 @@ export async function notify(env, event) {
     await fetch(url, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ source: 'sweeppay-selfsweep', at: Date.now(), ...event }),
+      body: JSON.stringify({ source: 'stapleport-selfsweep', at: Date.now(), ...event }),
       signal: AbortSignal.timeout(8000),
     });
   } catch (e) {

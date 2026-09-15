@@ -202,12 +202,12 @@
         },
         {
           "inputs": [],
-          "name": "BestProxyWallet_version",
+          "name": "DEFAULT_ADMIN_ROLE",
           "outputs": [
             {
-              "internalType": "uint256",
+              "internalType": "bytes32",
               "name": "",
-              "type": "uint256"
+              "type": "bytes32"
             }
           ],
           "stateMutability": "view",
@@ -215,12 +215,25 @@
         },
         {
           "inputs": [],
-          "name": "DEFAULT_ADMIN_ROLE",
+          "name": "FREE_COLLECT_QUOTA",
           "outputs": [
             {
-              "internalType": "bytes32",
+              "internalType": "uint32",
               "name": "",
-              "type": "bytes32"
+              "type": "uint32"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "FREE_PAID_QUOTA",
+          "outputs": [
+            {
+              "internalType": "uint32",
+              "name": "",
+              "type": "uint32"
             }
           ],
           "stateMutability": "view",
@@ -273,6 +286,19 @@
         },
         {
           "inputs": [],
+          "name": "Stapleport_version",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
           "name": "UPGRADER_ROLE",
           "outputs": [
             {
@@ -298,6 +324,30 @@
               "internalType": "address",
               "name": "walletadd",
               "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "treasury",
+              "type": "address"
+            }
+          ],
+          "name": "affiliate_split",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "aff",
+              "type": "address"
+            },
+            {
+              "internalType": "uint64",
+              "name": "rate",
+              "type": "uint64"
             }
           ],
           "stateMutability": "view",
@@ -346,6 +396,19 @@
             }
           ],
           "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "treasury",
+              "type": "address"
+            }
+          ],
+          "name": "bump_collect_counters",
+          "outputs": [],
+          "stateMutability": "nonpayable",
           "type": "function"
         },
         {
@@ -412,6 +475,35 @@
               "internalType": "address",
               "name": "",
               "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "treasury",
+              "type": "address"
+            }
+          ],
+          "name": "fee_state",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "exempt",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint32",
+              "name": "collectCount",
+              "type": "uint32"
+            },
+            {
+              "internalType": "uint32",
+              "name": "paidCount",
+              "type": "uint32"
             }
           ],
           "stateMutability": "view",
@@ -1097,6 +1189,30 @@
               "type": "address"
             }
           ],
+          "name": "treasury_counters",
+          "outputs": [
+            {
+              "internalType": "uint32",
+              "name": "collect_count",
+              "type": "uint32"
+            },
+            {
+              "internalType": "uint32",
+              "name": "paid_count",
+              "type": "uint32"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
           "name": "treasury_settings",
           "outputs": [
             {
@@ -1752,25 +1868,23 @@
   "chains": {
     "31337": {
       "meta": {
-        "name": "hardhat",
+        "name": "localhost",
         "rpc": "http://127.0.0.1:8545",
         "explorer": null
       },
-      "Imputations": "0x528749edd316c3734680889982B278A83b07EB29",
-      "Test_usdt": "0x3c74E57fE97c2b8e36A989deDB80Ec32a52C4fD0",
-      "WBNB": "0xB7588D82dFff0E872E3F595ea9AEDDe2d052E9b7",
-      "PancakeRouter": "0x16E781D26B1AA8Ac8827eEC245F5d19721257d0e"
+      "Imputations": "0xf14a4922417FEd17e14Bec7ddA4ba6a4936f87Ea",
+      "Test_usdt": "0x44f8E63b00e89320f7619583502bF90597993F2F",
+      "WBNB": "0x0b42B142087FAFcac1a1C3B90a61F86da7B64835",
+      "PancakeRouter": "0x68ED9eCB7D66f5E35BC6e0325b14f75dc55B45b4"
     },
-    "7156777": {
+    "78753": {
       "meta": {
-        "name": "zhaomei",
-        "rpc": "https://rpc.egoistmusic.top",
+        "name": "stapleport",
+        "rpc": "https://rpc.stapleport.com",
         "explorer": null
       },
-      "Imputations": "0x07931fB4D280F679D6327c04ccE14223492DA411",
-      "Test_usdt": "0x030820C269633DC7f88a955cDbf3064b3DD72dDe",
-      "WBNB": "0xC0fd93f992C1e90B8D2FF6228fe067d3139a718a",
-      "PancakeRouter": "0x60e6e4047942C06b0aCEFb110BF4A4FA49d223B1"
+      "Imputations": "0x873f15F365382F09Ad9E2694081d7b09cF6d00D8",
+      "Test_usdt": "0x3c74E57fE97c2b8e36A989deDB80Ec32a52C4fD0"
     }
   }
 }

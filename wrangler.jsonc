@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "sweeppay-selfsweep",
+  "name": "stapleport-selfsweep",
   "main": "src/worker.js",
   "compatibility_date": "2026-08-01",
 
@@ -17,7 +17,7 @@
   "vars": {
     // ---- 链与合约（逗号分隔 chainId；rpc/imputations 默认读 registry.json，
     //      可用 RPC_URL_<id> / IMPUTATIONS_<id> 覆盖；registry 外的自部署链必须用覆盖）----
-    "CHAIN_IDS": "7156777",
+    "CHAIN_IDS": "78753",
 
     // ---- 归集目标 ----
     // 国库地址（通道归属者，必填才工作）
