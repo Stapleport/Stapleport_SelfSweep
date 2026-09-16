@@ -10,6 +10,8 @@
     "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
+    "@stapleport/collect-kit": "file:../Stapleport_Collect_kit",
+    "@stapleport/worker-kit": "file:../../worker/Stapleport_WorkerKit",
     "viem": "^2.21.0"
   },
   "devDependencies": {

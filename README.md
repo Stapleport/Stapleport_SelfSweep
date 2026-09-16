@@ -23,7 +23,7 @@ Where the official product has an executor sweep for you, SelfSweep lets you be 
 - **Self-custodial signer** — the private key lives in a Cloudflare secret and only ever appears in worker memory; it signs `imputationall` calls and nothing else. Funds only ever move from your channels to your treasury.
 - **Threshold-based auto sweep** — multi-token, multi-channel, packed into **one** `imputationall` transaction per tick; real-calldata `eth_estimateGas` pre-check rejects would-revert transactions before they cost you gas.
 - **Fee-aware** — fee rates are read from the contract's `systeminfo()` every tick (never hardcoded), with a conservative profit pre-check for native-coin groups.
-- **Arrival monitor + webhook** (optional) — bind a KV namespace and every fresh deposit is detected (monotonic `received` baseline diff) and pushed to your webhook, along with sweep sent/confirmed/failed events.
+- **Arrival monitor + webhook** (optional) — bind a KV namespace and every fresh deposit is detected (monotonic `received` baseline diff) and pushed to your webhook, along with sweep sent/confirmed/failed events. Stapleport's own production stays zero-KV (red line); this optional binding is for merchants' self-hosted deployments only.
 - **Stateless core** — no KV needed for sweeping: a failed transaction simply retries next tick. Zero bindings deploy and work.
 - **Zero public surface** — `workers_dev: false`, no inbound routes at all; the only trigger is the cron schedule.
 - **Channel model identical to the web app** — channels are `secret-6-digit-number` orders (path = `keccak256`), the exact same convention as the Stapleport web frontend.
@@ -166,7 +166,7 @@ Full-loop against a local chain: start a hardhat node and deploy Imputations fro
 - **自托管签名核**：私钥只存于 Cloudflare secret、只在运行时内存出现；只签 `imputationall` 调用，资金路径只有「你的通道 → 你的国库」。
 - **阈值自动归集**：多币种、多通道打包成**一笔** `imputationall`；真实 calldata 估 gas 预检，会 revert 的交易在花钱之前就被拦下。
 - **费率感知**：每 tick 现读合约 `systeminfo()`，绝不写死费率；原生币组带保守盈利预检。
-- **到账监控 + webhook**（可选）：绑定 KV 后，新到账（`received` 只增不减口径做基线差）即时推送 webhook，归集的发送/成功/失败也有事件。
+- **到账监控 + webhook**（可选）：绑定 KV 后，新到账（`received` 只增不减口径做基线差）即时推送 webhook，归集的发送/成功/失败也有事件。Stapleport 自家生产零 KV（红线），此绑定仅供商户自部署可选。
 - **核心无状态**：归集不依赖 KV——失败的交易下一 tick 自动重试；零绑定即可部署运行。
 - **零公网面**：`workers_dev: false`、没有任何入站路由，唯一触发方式是 cron。
 - **通道模型与网页完全一致**：通道 = `密语-6位编号`（path = keccak256），与 Stapleport 网页端同一套约定。

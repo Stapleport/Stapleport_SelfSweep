@@ -85,6 +85,8 @@ export function loadConfig(env) {
     maxPerTick: Math.max(1, Number(env.MAX_TX_PER_TICK ?? 1) | 0),
     // 热钱包余额需 ≥ 本单 gas × 该倍数（给失败重试留量）
     gasReserveX: Math.max(1, Number(env.WALLET_GAS_RESERVE_X ?? 3) | 0),
+    // 估 gas 异常回落上限（联盟链估 gas 假阴性坑，Bridge DEFAULT_GAS 同款默认）
+    defaultGas: bigIntVar(env.DEFAULT_GAS, 600000n),
     dryRun: String(env.DRY_RUN ?? 'false') === 'true',
     webhookUrl: String(env.WEBHOOK_URL ?? '').trim() || null,
     lockMs: Math.max(1, Number(env.TICK_LOCK_SECONDS ?? 55) || 55) * 1000,

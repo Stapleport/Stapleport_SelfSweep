@@ -6,6 +6,7 @@ import { sweepChain, resolveChain } from './sweep.js';
 import { monitorChain } from './monitor.js';
 import { notify } from './notify.js';
 import { rpc, fmtNative } from './lib/rpc.js';
+import { receiptStatus } from '@stapleport/worker-kit';
 
 // isolate 内存 tick 锁（照 Executor 口径：防同 isolate 重叠，跨 isolate 不强求）
 let tickLockUntil = 0;
@@ -86,11 +87,12 @@ async function settlePending(env, cfg, ctx) {
     try {
       const chain = resolveChain(cfg, String(s.chainId));
       const receipt = chain ? await rpc(chain.rpcUrl, 'eth_getTransactionReceipt', [tx]) : null;
+      const status = receiptStatus(receipt); // 'confirmed' | 'reverted' | 'pending'（Kit 收编口径）
       const now = Date.now();
-      if (receipt?.status === '0x1') {
+      if (status === 'confirmed') {
         ctx.waitUntil(notify(env, { event: 'sweep_confirmed', tx, chainId: s.chainId, tokens: s.tokens }));
         pendingSweeps.delete(tx);
-      } else if (receipt?.status === '0x0') {
+      } else if (status === 'reverted') {
         ctx.waitUntil(notify(env, { event: 'sweep_failed', tx, chainId: s.chainId, tokens: s.tokens }));
         pendingSweeps.delete(tx);
       } else if (now - s.at > PENDING_TTL_MS) {
