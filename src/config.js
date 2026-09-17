@@ -1,16 +1,11 @@
 // 环境变量 → 运行配置（纯函数，可单测）。密钥 SWEEP_PRIVATE_KEY 不经过这里。
 // 防 CF 面板坑：vars 很容易被存成空串，空/非法一律回落默认值（照 Executor config.js 的教训）。
+// parseCsvList / isAddress / bigIntVar / lockMsFromEnv 已收编 @stapleport/worker-kit
+// （2026-09-17，与 Executor 同文归一）；此处再导出保持既有 import 路径零改动。
 import { NATIVE, rangeOrders } from './lib/imputations.js';
+import { parseCsvList, isAddress, bigIntVar, lockMsFromEnv } from '@stapleport/worker-kit';
 
-export function parseCsvList(s) {
-  return String(s ?? '')
-    .split(',')
-    .map((x) => x.trim().toLowerCase())
-    .filter(Boolean);
-}
-
-const ADDR_RE = /^0x[0-9a-fA-F]{40}$/;
-export const isAddress = (s) => ADDR_RE.test(String(s ?? '').trim());
+export { parseCsvList, isAddress };
 
 // MIN_SWEEP：JSON { "native": "0.01", "0xtoken…": "100" } → Map<token小写, 人类可读数字符串>
 // 未配置或非法 → 默认只挂原生币 0.01
@@ -59,16 +54,6 @@ export function resolveOrders(env) {
   };
 }
 
-function bigIntVar(v, fallback) {
-  const s = String(v ?? '').trim();
-  if (!s) return fallback;
-  try {
-    return BigInt(s);
-  } catch {
-    return fallback;
-  }
-}
-
 export function loadConfig(env) {
   const treasury = isAddress(env.TREASURY) ? String(env.TREASURY).trim().toLowerCase() : null;
   const minSweep = parseMinSweep(env.MIN_SWEEP);
@@ -89,7 +74,7 @@ export function loadConfig(env) {
     defaultGas: bigIntVar(env.DEFAULT_GAS, 600000n),
     dryRun: String(env.DRY_RUN ?? 'false') === 'true',
     webhookUrl: String(env.WEBHOOK_URL ?? '').trim() || null,
-    lockMs: Math.max(1, Number(env.TICK_LOCK_SECONDS ?? 55) || 55) * 1000,
+    lockMs: lockMsFromEnv(env),
     // 按链覆盖：env.RPC_URL_<chainId> / env.IMPUTATIONS_<chainId>（空串视为未设）
     rpcUrl: (chainId) => String(env[`RPC_URL_${chainId}`] ?? '').trim() || null,
     imputations: (chainId) => {

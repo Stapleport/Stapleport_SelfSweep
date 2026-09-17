@@ -6,10 +6,11 @@ import { sweepChain, resolveChain } from './sweep.js';
 import { monitorChain } from './monitor.js';
 import { notify } from './notify.js';
 import { rpc, fmtNative } from './lib/rpc.js';
-import { receiptStatus } from '@stapleport/worker-kit';
+import { receiptStatus, createTickLock } from '@stapleport/worker-kit';
 
-// isolate 内存 tick 锁（照 Executor 口径：防同 isolate 重叠，跨 isolate 不强求）
-let tickLockUntil = 0;
+// isolate 内存 tick 锁（照 Executor 口径：防同 isolate 重叠，跨 isolate 不强求）。
+// 2026-09-17 起走 kit createTickLock（lockMs 首个 tick 时从 cfg 取；KV 事故案底见 kit lock.js）
+let tickLock = null;
 // 在途归集流水（内存）：下一 tick 查回执并通知；isolate 重启丢通知不丢资金
 const pendingSweeps = new Map();
 const PENDING_TTL_MS = 24 * 60 * 60 * 1000;
@@ -17,9 +18,8 @@ const PENDING_TTL_MS = 24 * 60 * 60 * 1000;
 export default {
   async scheduled(controller, env, ctx) {
     const cfg = loadConfig(env);
-    const now = Date.now();
-    if (now < tickLockUntil) return console.log('[selfsweep] tick 锁内，跳过本轮');
-    tickLockUntil = now + cfg.lockMs;
+    tickLock ??= createTickLock({ lockMs: cfg.lockMs, tag: 'selfsweep' });
+    if (!tickLock.tryAcquire()) return;
     await runTick(env, cfg, ctx);
   },
 
