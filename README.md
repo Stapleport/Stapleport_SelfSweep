@@ -85,7 +85,9 @@ Everything lives in `wrangler.jsonc` vars (public, non-sensitive) + one secret. 
 | `RPC_URL_<chainId>` | | Override the RPC of that chain (required for chains not in the registry) |
 | `IMPUTATIONS_<chainId>` | | Override that chain's Imputations address (your own deployment / non-registry chains) |
 
-Default chain metadata (rpc/Imputations addresses) comes from `registry.json`, the same artifact other Stapleport components sync from `Stapleport_hardhat/deployments/all.json`. Your own deployments join via the two override variables — no need to touch the registry.
+Default chain metadata (rpc/Imputations addresses) comes from `registry.json`, synced from `Stapleport_hardhat/deployments/all.json` (the single source of truth) via `pnpm sync-registry`. Your own deployments join via the two override variables — no need to touch the registry.
+
+`pnpm sync-registry` (no arguments) rewrites `registry.json` from `Stapleport_hardhat/deployments/all.json` in this repo's own archive shape; it also runs automatically on the hardhat deploy tail (`push-registry.js`, dev tier). The archived chain/key set is the sync basis — chains are never auto-added (a registry chain is a sweep-enabled chain), and keys with no counterpart in all.json keep their previous value with a notice for manual review. Pass `--from <path-to-source.json>` to explicitly validate and atomically overwrite `registry.json` from an arbitrary snapshot instead.
 
 **KV (optional).** Default is commented out = fully stateless mode; sweeping works, you just don't get arrival notifications. To enable: `wrangler kv namespace create STATE`, put the returned id into `kv_namespaces` in `wrangler.jsonc`, redeploy.
 
@@ -114,6 +116,8 @@ npm test                         # unit tests (config parsing, pure functions)
 ```
 
 Full-loop against a local chain: start a hardhat node and deploy Imputations from `Stapleport_hardhat`, then point `.dev.vars` at it (`CHAIN_IDS=31337` + `RPC_URL_31337` + `IMPUTATIONS_31337`). `scripts/dev-setup.mjs <imputations> <treasury> [ETH]` funds the well-known test key via `hardhat_setBalance` and pays a channel. Note `wrangler dev` does **not** hot-reload `.dev.vars` — restart to apply config changes.
+
+Two local-chain quirks: paying **native** into an *activated* channel triggers the wallet `receive()` split on the spot, and a bare 21k-gas transfer then "runs out of gas" (the hook needs ≥60k) — pay an *unactivated* channel when you want to observe a fresh arrival. And if port 8787 is taken, `wrangler dev` silently picks the next free port — check its startup log for the real one.
 
 ### Project Structure
 
@@ -228,7 +232,7 @@ npm run deploy
 | `RPC_URL_<chainId>` | | 覆盖该链 RPC（registry 外的链必填） |
 | `IMPUTATIONS_<chainId>` | | 覆盖该链 Imputations 地址（自部署合约 / registry 外的链必填） |
 
-链的默认 rpc / Imputations 地址来自 `registry.json`（与其他 Stapleport 组件一样同步自 `Stapleport_hardhat/deployments/all.json`）。自部署合约或新链用两个覆盖变量接入，不必改 registry。
+链的默认 rpc / Imputations 地址来自 `registry.json`（`pnpm sync-registry` 同步自唯一事实源 `Stapleport_hardhat/deployments/all.json`，部署尾部 push-registry 也会自动推 dev tier）。自部署合约或新链用两个覆盖变量接入，不必改 registry。
 
 **KV（可选）**：默认注释掉 = 纯无状态模式，归集照常工作，只是没有到账通知。启用：`wrangler kv namespace create STATE`，把返回的 id 填进 `wrangler.jsonc` 的 `kv_namespaces` 再部署。
 
@@ -257,6 +261,8 @@ npm test                         # 单测（配置解析与纯函数）
 ```
 
 本地链全链路：起 hardhat 节点并从 `Stapleport_hardhat` 部署 Imputations，然后 `.dev.vars` 指向它（`CHAIN_IDS=31337` + `RPC_URL_31337` + `IMPUTATIONS_31337`）。`scripts/dev-setup.mjs <imputations> <treasury> [ETH]` 用 `hardhat_setBalance` 给公开测试私钥注资并向通道打款。注意 `wrangler dev` **不会**热加载 `.dev.vars`——改配置要重启。
+
+本地链两个易踩点：给**已激活**通道打原生币会当场触发钱包 `receive()` 分发，21k gas 的裸转账会「ran out of gas」（钩子需 ≥60k）——要观察「新到账」请打**未激活**通道；8787 端口被占时 `wrangler dev` 会静默换下一个空闲端口，以启动日志为准。
 
 ### 项目结构
 
