@@ -3237,6 +3237,31 @@
             {
               "indexed": true,
               "internalType": "address",
+              "name": "pair",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "creator",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint16",
+              "name": "creatorFeeBps",
+              "type": "uint16"
+            }
+          ],
+          "name": "LaunchPairRegistered",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
               "name": "previousOwner",
               "type": "address"
             },
@@ -3414,6 +3439,43 @@
           "type": "function"
         },
         {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "name": "launchProfile",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "creator",
+              "type": "address"
+            },
+            {
+              "internalType": "uint16",
+              "name": "creatorFeeBps",
+              "type": "uint16"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "launchRegistrar",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
           "inputs": [],
           "name": "owner",
           "outputs": [
@@ -3503,6 +3565,34 @@
           "type": "function"
         },
         {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "tokenA",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "tokenB",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "creator",
+              "type": "address"
+            },
+            {
+              "internalType": "uint16",
+              "name": "creatorFeeBps",
+              "type": "uint16"
+            }
+          ],
+          "name": "registerLaunchPair",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
           "inputs": [],
           "name": "renounceOwnership",
           "outputs": [],
@@ -3518,6 +3608,19 @@
             }
           ],
           "name": "setFeeTo",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "registrar",
+              "type": "address"
+            }
+          ],
+          "name": "setLaunchRegistrar",
           "outputs": [],
           "stateMutability": "nonpayable",
           "type": "function"
@@ -4807,13 +4910,13 @@
         "rpc": "http://127.0.0.1:8545",
         "explorer": null
       },
-      "Imputations": "0x426B0962Bd698fa0735f6256FD8A34dDEB802544",
-      "Test_usdt": "0x4Be7e72e14B89107AA6E4308FD69aB8513943cB2",
-      "WBNB": "0xe3c4E7DB285cb67bf050b8b9565B1e66D3068B31",
-      "PancakeRouter": "0xc44357402E54A913ADa4f5dCdFD05Ca09aa75c4A",
-      "SwapFactory": "0xa134BBFD947F00753500f8294fdaC938fa2d4B65",
-      "SwapRouter": "0x1bA44D2fA023F15B88045695aD59D8B8d74D41e4",
-      "WETH9": "0xebCA0d7cBc5A4a6263f74A9f0e1c8444a8C3617e"
+      "Imputations": "0xb646C6C0da9e086CD9eD6BC441d78de91eaf281B",
+      "Test_usdt": "0xccEF6bD629D8Bdfbc2713cCb94CB11ab6d4Ea66E",
+      "WBNB": "0x75186A55715814175cD07A784b0a39e9C06bbE57",
+      "PancakeRouter": "0x3e0887FB00793907122DBCB2885C2e780A4552aE",
+      "SwapFactory": "0x0C2f6c4811540d002E5F4C3F883affE322fD6F76",
+      "SwapRouter": "0x712FFc09cd1A00a2962013Fb2e57A36de267d0BA",
+      "WETH9": "0xbDd1b4c25Bd8356E1D93a9A8d9f306A7Dbb34fa8"
     }
   }
 }
