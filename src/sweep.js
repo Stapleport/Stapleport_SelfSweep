@@ -26,6 +26,8 @@ import {
   qualifyPaths,
   parseSystemInfo,
   netAfterFees,
+  bigIntVar,
+  parseCsvList,
 } from '@stapleport/worker-kit';
 
 // chainId → { rpcUrl, imputations }：registry.json 为底，RPC_URL_<id> / IMPUTATIONS_<id> 覆盖
@@ -67,8 +69,25 @@ async function tokenDecimals(rpcUrl, token) {
   return d;
 }
 
+// 通道密语启动校验（E-018）：CHANNEL_SECRET 为空、或仍是模板占位值（.dev.vars.example 的 <SET_ME>），
+// 都视为「未按自拟步骤配好」→ 告警并跳过归集。显式 CHANNEL_ORDERS 不依赖 secret，豁免。
+// （配置解析在 config.js；通道密语校验函数与调用点置于此。）
+const CHANNEL_SECRET_PLACEHOLDER = '<SET_ME>';
+export function validateChannelSecret(env) {
+  if (parseCsvList(env.CHANNEL_ORDERS).length) return null;
+  const secret = String(env.CHANNEL_SECRET ?? '').trim();
+  if (!secret) return 'CHANNEL_SECRET 为空（请填自拟密语，或改用 CHANNEL_ORDERS）';
+  if (secret === CHANNEL_SECRET_PLACEHOLDER) return `CHANNEL_SECRET 仍是模板占位值 ${CHANNEL_SECRET_PLACEHOLDER}（请改成自拟密语）`;
+  return null;
+}
+
 // 单链归集一轮。返回广播列表（通知由调用方负责）
 export async function sweepChain(env, cfg, wallet, chainId) {
+  const secretErr = validateChannelSecret(env);
+  if (secretErr) {
+    console.log(`[selfsweep] 通道配置校验未过：${secretErr} —— 跳过归集`);
+    return [];
+  }
   const chain = resolveChain(cfg, chainId);
   if (!chain) {
     console.log(`[selfsweep] 链 ${chainId} 缺 rpc/imputations（registry 无此链且未设覆盖变量），跳过`);
@@ -123,6 +142,13 @@ export async function sweepChain(env, cfg, wallet, chainId) {
   // 估 gas 异常回落 defaultGas + eth_call 模拟甄别——联盟链（78753 初代）eth_estimateGas
   // 有假阴性坑（Bridge NOTES 2026-09-13），模拟也 revert 才真弃单，省一笔必 revert 的 gas
   const gasPrice = effectiveGasPrice(await rpc(rpcUrl, 'eth_gasPrice', []));
+  // gas 价上限（env.MAX_GAS_PRICE_WEI，缺省 50 gwei；命名对齐 Executor RELAY_MAX_GAS_PRICE_WEI 风格）：
+  // 现价超过上限 = 本轮不发，防 RPC 上报异常天价把热钱包烧穿
+  const maxGasPriceWei = bigIntVar(env.MAX_GAS_PRICE_WEI, 50_000_000_000n);
+  if (gasPrice > maxGasPriceWei) {
+    console.log(`[selfsweep] 链 ${chainId} gasPrice ${gasPrice} wei 超过上限 ${maxGasPriceWei} wei（MAX_GAS_PRICE_WEI），本轮不发`);
+    return [];
+  }
   const pre = await gasPrecheck({
     rpcCall: (method, params) => rpc(rpcUrl, method, params),
     tx: { from: wallet.address, to: imputations, data },
@@ -165,8 +191,19 @@ export async function sweepChain(env, cfg, wallet, chainId) {
     return [];
   }
 
-  // 签名广播（legacy；nonce 从 pending 取，同 tick 内自增——虽然每链只发 1 笔，留好习惯）
-  const nonce = BigInt(await rpc(rpcUrl, 'eth_getTransactionCount', [wallet.address, 'pending']));
+  // 签名广播（legacy）。nonce 一致性校验：pending 含「已广播未落块」的 tx，与 latest 不一致
+  // = 有挂单在飞，pending 不可信 → 拒采信本轮不发（防 nonce 撞车/gap）
+  const [pendingHex, latestHex] = await Promise.all([
+    rpc(rpcUrl, 'eth_getTransactionCount', [wallet.address, 'pending']),
+    rpc(rpcUrl, 'eth_getTransactionCount', [wallet.address, 'latest']),
+  ]);
+  const pendingNonce = BigInt(pendingHex);
+  const latestNonce = BigInt(latestHex);
+  if (pendingNonce !== latestNonce) {
+    console.log(`[selfsweep] 链 ${chainId} nonce 不一致（pending=${pendingNonce} latest=${latestNonce}）——拒采信，本轮不发`);
+    return [];
+  }
+  const nonce = pendingNonce;
   const rawTx = await wallet.signTransaction({
     type: 'legacy',
     chainId: Number(chainId),

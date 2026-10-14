@@ -22,8 +22,10 @@
     // ---- 归集目标 ----
     // 国库地址（通道归属者，必填才工作）
     "TREASURY": "",
-    // 通道号段：order = `${CHANNEL_SECRET}-${6位补零编号}`，与网页「密语-编号」完全一致
-    "CHANNEL_SECRET": "260825",
+    // 通道号段：order = `${CHANNEL_SECRET}-${6位补零编号}`，与网页「密语-编号」完全一致。
+    // 模板留空：务必改成你自己的密语（自拟步骤见 README）；空 / 仍是模板占位值 = 启动校验
+    // 告警并跳过归集（显式 CHANNEL_ORDERS 不受影响）
+    "CHANNEL_SECRET": "",
     "CHANNEL_FROM": "1",
     "CHANNEL_TO": "20",
     // 或显式列通道全名（逗号分隔，优先于号段）：如 "shop-000001,shop-000002"
@@ -42,6 +44,8 @@
     "MAX_TX_PER_TICK": "1",
     // tick 内存锁：防止重叠执行（cron 5 分钟一轮，55s 足够；本地联调可调小）
     "TICK_LOCK_SECONDS": "55",
+    // gas 价上限（wei）：链上现价超过即拒发本链，防 RPC 上报异常天价烧穿热钱包。缺省 50 gwei
+    "MAX_GAS_PRICE_WEI": "50000000000",
     // true = 只打印将发的交易，不广播
     "DRY_RUN": "false",
     // 可选：到账/归集通知 webhook（POST JSON）。到账事件需同时绑定下面的 STATE KV

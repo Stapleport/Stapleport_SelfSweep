@@ -38,8 +38,8 @@ test('resolveOrders：显式 csv 优先，号段含端点且有上限', () => {
   const a = resolveOrders({ CHANNEL_ORDERS: 'shop-000001, shop-000002' });
   assert.deepEqual(a.orders, ['shop-000001', 'shop-000002']);
 
-  const b = resolveOrders({ CHANNEL_SECRET: '260825', CHANNEL_FROM: '3', CHANNEL_TO: '5' });
-  assert.deepEqual(b.orders, ['260825-000003', '260825-000004', '260825-000005']);
+  const b = resolveOrders({ CHANNEL_SECRET: 'demo', CHANNEL_FROM: '3', CHANNEL_TO: '5' });
+  assert.deepEqual(b.orders, ['demo-000003', 'demo-000004', 'demo-000005']);
 
   // 大区间被钳到 200
   const c = resolveOrders({ CHANNEL_SECRET: 's', CHANNEL_FROM: '1', CHANNEL_TO: '99999' });

@@ -14,8 +14,8 @@ const payer = privateKeyToAccount('0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbe
 await rpc(RPC_URL, 'hardhat_setBalance', [payer.address, '0x3635C9ADC5DEA00000']);
 console.log(`payer ${payer.address} 注资完成`);
 
-// 2) 算通道地址（密语 260825-000001，与 .dev.vars 号段一致）
-const order = '260825-000001';
+// 2) 算通道地址（密语占位 <SET_ME>，跑前请与 .dev.vars 的 CHANNEL_SECRET 号段对齐）
+const order = '<SET_ME>-000001';
 const path = keccak256(toBytes(order));
 const data = encodeFunctionData({ abi: ABI, functionName: 'getwalletadd', args: [treasury, path] });
 const channel = await rpc(RPC_URL, 'eth_call', [{ to: imputations, data }, 'latest']);

@@ -53,7 +53,10 @@ npm install
 # 2. Generate a dedicated hot-wallet key (gas money only — never your main funds)
 openssl rand -hex 32   # prefix with 0x
 
-# 3. Configure (see Configuration below), then set the key
+# 3. Configure (see Configuration below): TREASURY, CHAIN_IDS, thresholds, and set your own
+#    CHANNEL_SECRET (order = "secret-6-digit-number", same convention as the web app; any
+#    self-chosen string works — the worker refuses to sweep while it is empty or the template
+#    placeholder). Then set the key:
 npx wrangler login     # first time only
 npx wrangler secret put SWEEP_PRIVATE_KEY
 
@@ -80,6 +83,7 @@ Everything lives in `wrangler.jsonc` vars (public, non-sensitive) + one secret. 
 | `GAS_BUFFER_X10` | | Profit safety margin ×N/10 (default 12 = ×1.2). Applies to groups containing native coin |
 | `MAX_TX_PER_TICK` | | Max broadcasts per chain per tick (default 1 — one multi-token pack is plenty) |
 | `TICK_LOCK_SECONDS` | | In-memory tick lock (default 55s) |
+| `MAX_GAS_PRICE_WEI` | | Gas-price cap in wei; the chain is skipped if the live `eth_gasPrice` exceeds it (default 50 gwei). Guards against a pathological RPC value draining the hot wallet |
 | `DRY_RUN` | | `true` = log what would be broadcast, send nothing. **Run this first** |
 | `WEBHOOK_URL` | | Optional notification webhook (see Notifications) |
 | `RPC_URL_<chainId>` | | Override the RPC of that chain (required for chains not in the registry) |
@@ -110,6 +114,7 @@ Notification failures are logged and never affect sweeping.
 ```bash
 cp .dev.vars.example .dev.vars   # fill in your config (gitignored)
 npm run dev                      # wrangler dev --test-scheduled
+node scripts/dev-with-mnemonic.mjs   # same, but injects the public hardhat test key as SWEEP_PRIVATE_KEY via --var (local 31337 only; production uses wrangler secret put SWEEP_PRIVATE_KEY)
 curl "http://localhost:8787/__scheduled?cron=*+*+*+*+*"   # trigger one tick
 curl http://localhost:8787/health                         # runtime status
 npm test                         # unit tests (config parsing, pure functions)
@@ -200,7 +205,8 @@ npm install
 # 2. 生成专用热钱包私钥（只放 gas，绝不放主资产）
 openssl rand -hex 32   # 前面加 0x
 
-# 3. 配置（见下文配置表），然后写入密钥
+# 3. 配置（见下文配置表）：填 TREASURY、CHAIN_IDS、阈值，并把 CHANNEL_SECRET 改成你自己的密语
+#    （order = 「密语-6位补零编号」，与网页同约定；自拟任意字符串即可，留空/仍是模板占位值会拒绝归集）。然后写入密钥
 npx wrangler login     # 首次登录
 npx wrangler secret put SWEEP_PRIVATE_KEY
 
@@ -227,6 +233,7 @@ npm run deploy
 | `GAS_BUFFER_X10` | | 盈利安全边际 ×N/10（默认 12 = ×1.2），只作用于含原生币的归集组 |
 | `MAX_TX_PER_TICK` | | 每 tick 每链最多几笔（默认 1，一笔多币种打包够用） |
 | `TICK_LOCK_SECONDS` | | tick 内存锁（默认 55s） |
+| `MAX_GAS_PRICE_WEI` | | gas 价上限（wei）：链上现价 `eth_gasPrice` 超过即跳过该链（默认 50 gwei），防 RPC 异常天价烧穿热钱包 |
 | `DRY_RUN` | | `true` = 只打印将发的交易不广播。**上线前必跑** |
 | `WEBHOOK_URL` | | 可选通知 webhook（见下文通知事件） |
 | `RPC_URL_<chainId>` | | 覆盖该链 RPC（registry 外的链必填） |
@@ -255,6 +262,7 @@ npm run deploy
 ```bash
 cp .dev.vars.example .dev.vars   # 填配置（已 gitignore）
 npm run dev                      # wrangler dev --test-scheduled
+node scripts/dev-with-mnemonic.mjs   # 同上，但经 --var 注入公开 hardhat 测试键为 SWEEP_PRIVATE_KEY（仅本地 31337；生产走 wrangler secret put SWEEP_PRIVATE_KEY）
 curl "http://localhost:8787/__scheduled?cron=*+*+*+*+*"   # 手动触发一轮
 curl http://localhost:8787/health                         # 运行状态
 npm test                         # 单测（配置解析与纯函数）

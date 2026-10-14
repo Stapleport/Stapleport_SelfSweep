@@ -24,6 +24,25 @@
             {
               "indexed": true,
               "internalType": "address",
+              "name": "oldLogic",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "newLogic",
+              "type": "address"
+            }
+          ],
+          "name": "BaseLogicSet",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
               "name": "treasury",
               "type": "address"
             },
@@ -84,6 +103,25 @@
             }
           ],
           "name": "FeesWithdrawn",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "uint64",
+              "name": "oldReward",
+              "type": "uint64"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint64",
+              "name": "newReward",
+              "type": "uint64"
+            }
+          ],
+          "name": "GasPriceRewardSet",
           "type": "event"
         },
         {
@@ -1054,6 +1092,19 @@
           "inputs": [
             {
               "internalType": "address",
+              "name": "impl",
+              "type": "address"
+            }
+          ],
+          "name": "set_base_logic",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
               "name": "_auth",
               "type": "address"
             }
@@ -1072,6 +1123,19 @@
             }
           ],
           "name": "set_collect_event_switch",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint64",
+              "name": "v",
+              "type": "uint64"
+            }
+          ],
+          "name": "set_gas_price_reward",
           "outputs": [],
           "stateMutability": "nonpayable",
           "type": "function"
@@ -1256,6 +1320,19 @@
             }
           ],
           "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "oldLogic",
+              "type": "address"
+            }
+          ],
+          "name": "unregisterLogic",
+          "outputs": [],
+          "stateMutability": "nonpayable",
           "type": "function"
         },
         {
@@ -4910,10 +4987,10 @@
         "rpc": "http://127.0.0.1:8545",
         "explorer": null
       },
-      "Imputations": "0xb646C6C0da9e086CD9eD6BC441d78de91eaf281B",
-      "Test_usdt": "0xccEF6bD629D8Bdfbc2713cCb94CB11ab6d4Ea66E",
-      "WBNB": "0x75186A55715814175cD07A784b0a39e9C06bbE57",
-      "PancakeRouter": "0x3e0887FB00793907122DBCB2885C2e780A4552aE",
+      "Imputations": "0x914007Ef6bf1a926923B54328917244c8984237e",
+      "Test_usdt": "0xd1728AbE5467563795eDD1903dc0Cb09D19c6e17",
+      "WBNB": "0x4Be7e72e14B89107AA6E4308FD69aB8513943cB2",
+      "PancakeRouter": "0xF310cE606B6e124b67aD9e3462ff97164F42274C",
       "SwapFactory": "0x0C2f6c4811540d002E5F4C3F883affE322fD6F76",
       "SwapRouter": "0x712FFc09cd1A00a2962013Fb2e57A36de267d0BA",
       "WETH9": "0xbDd1b4c25Bd8356E1D93a9A8d9f306A7Dbb34fa8"

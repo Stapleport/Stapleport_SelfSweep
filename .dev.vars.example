@@ -17,7 +17,8 @@ CHAIN_IDS=31337
 # 国库地址（通道归属者；本地测试可用 hardhat acct1）
 TREASURY=0x70997970C51812dc3A010C7d01b50e0d17dc79C8
 # 通道号段：order = `${CHANNEL_SECRET}-${6位补零编号}`，与网页「密语-编号」完全一致
-CHANNEL_SECRET=260825
+# 值必须自拟替换；占位 <SET_ME> 会被启动校验拒绝（或改用下面的 CHANNEL_ORDERS 显式列通道）
+CHANNEL_SECRET=<SET_ME>
 CHANNEL_FROM=1
 CHANNEL_TO=20
 # 或显式列通道全名（逗号分隔，优先于号段）：CHANNEL_ORDERS=shop-000001,shop-000002
