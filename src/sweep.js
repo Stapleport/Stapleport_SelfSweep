@@ -139,7 +139,7 @@ export async function sweepChain(env, cfg, wallet, chainId) {
 
   // 预检① 真实 calldata 估 gas（@stapleport/worker-kit precheck.gasPrecheck，Bridge sendTx
   // 口径收编）：collect_auth 收紧且热钱包不在授权名单、余额为 0 等链上拒绝都会在这里现形。
-  // 估 gas 异常回落 defaultGas + eth_call 模拟甄别——联盟链（78753 初代）eth_estimateGas
+  // 估 gas 异常回落 defaultGas + eth_call 模拟甄别——联盟链初代（已退役）eth_estimateGas
   // 有假阴性坑（Bridge NOTES 2026-09-13），模拟也 revert 才真弃单，省一笔必 revert 的 gas
   const gasPrice = effectiveGasPrice(await rpc(rpcUrl, 'eth_gasPrice', []));
   // gas 价上限（env.MAX_GAS_PRICE_WEI，缺省 50 gwei；命名对齐 Executor RELAY_MAX_GAS_PRICE_WEI 风格）：
