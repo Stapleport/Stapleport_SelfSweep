@@ -16,8 +16,10 @@
   //   wrangler secret put SWEEP_PRIVATE_KEY
   "vars": {
     // ---- 链与合约（逗号分隔 chainId；rpc/imputations 默认读 registry.json，
-    //      可用 RPC_URL_<id> / IMPUTATIONS_<id> 覆盖；registry 外的自部署链必须用覆盖）----
-    "CHAIN_IDS": "31339",
+    //      可用 RPC_URL_<id> / IMPUTATIONS_<id> 覆盖；registry 外的自部署链必须用覆盖。
+    //      2026-10-15 进链 78756 测试网：无 Imputations 事实时 resolveChain 返回 null，
+    //      worker 按链跳过（worker.js:60），零副作用）----
+    "CHAIN_IDS": "31339,78756",
 
     // ---- 归集目标 ----
     // 国库地址（通道归属者，必填才工作）
