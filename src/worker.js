@@ -1,4 +1,6 @@
-// Stapleport_SelfSweep 入口：cron 触发归集 tick；HTTP 只留 /health 一条只读状态路由。
+// Stapleport_SelfSweep 入口：全生态统一调度器（Stapleport_Scheduler）经 service binding
+// POST /internal/tick 唤醒归集 tick（自有 crons 已删、账号 cron 名额释放；scheduled handler
+// 保留仅为 --test-scheduled 便利，生产永不触发）；HTTP 另留 /health 一条只读状态路由。
 // 本 Worker 是自建者自己的签名核：私钥只进 wrangler secret / .dev.vars，零公网面（workers_dev:false）。
 import { privateKeyToAccount } from 'viem/accounts';
 import { loadConfig } from './config.js';
@@ -11,20 +13,36 @@ import { receiptStatus, createTickLock } from '@stapleport/worker-kit';
 // isolate 内存 tick 锁（照 Executor 口径：防同 isolate 重叠，跨 isolate 不强求）。
 // 2026-09-17 起走 kit createTickLock（lockMs 首个 tick 时从 cfg 取；KV 事故案底见 kit lock.js）
 let tickLock = null;
+// 最近一轮摘要（isolate 内存；GET /internal/tick 只读查询用，调度器侧链式断言源）
+let lastRun = null;
 // 在途归集流水（内存）：下一 tick 查回执并通知；isolate 重启丢通知不丢资金
 const pendingSweeps = new Map();
 const PENDING_TTL_MS = 24 * 60 * 60 * 1000;
 
 export default {
   async scheduled(controller, env, ctx) {
-    const cfg = loadConfig(env);
-    tickLock ??= createTickLock({ lockMs: cfg.lockMs, tag: 'selfsweep' });
-    if (!tickLock.tryAcquire()) return;
-    await runTick(env, cfg, ctx);
+    await executeTick(env, ctx);
   },
 
-  async fetch(request, env) {
+  // 内部 tick 口（binding-only，全生态统一调度器专用）：POST=执行一轮 executeTick 返回执行
+  // 摘要；GET=last_run 只读（isolate 内存态）；其余方法 404；token 不符 401（env 未配
+  // INTERNAL_TICK_TOKEN=fail-closed）。路径必须 /internal/tick（host 段裸 internal 会解析成
+  // /tick 的 404——生态实测案底）。/health 存活口既有语义零改动。
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    if (url.pathname === '/internal/tick') {
+      const expected = env.INTERNAL_TICK_TOKEN ?? '';
+      if (!expected || request.headers.get('x-internal-token') !== expected) {
+        return new Response('unauthorized', { status: 401 });
+      }
+      if (request.method === 'GET') return Response.json({ ok: true, last_run: lastRun });
+      if (request.method !== 'POST') return new Response('not found', { status: 404 });
+      const summary = await executeTick(env, ctx).catch((e) => {
+        console.error('[selfsweep] tick 异常', e);
+        return { ok: false, error: 'tick_failed' };
+      });
+      return Response.json({ ok: true, ...summary });
+    }
     if (request.method === 'GET' && (url.pathname === '/' || url.pathname === '/health')) {
       const cfg = loadConfig(env);
       return Response.json({
@@ -43,6 +61,20 @@ export default {
     return new Response('not found', { status: 404 });
   },
 };
+
+// 调度器唤醒 / scheduled 共用入口：锁段（原 scheduled 体平移）+ tick 本体（runTick 零改动）。
+// 返回一轮摘要并落 lastRun（isolate 内存态；锁未过期轮 reason=tick_locked）。
+export async function executeTick(env, ctx = { waitUntil() {} }) {
+  const cfg = loadConfig(env);
+  tickLock ??= createTickLock({ lockMs: cfg.lockMs, tag: 'selfsweep' });
+  if (!tickLock.tryAcquire()) {
+    lastRun = { at: Date.now(), executed: false, reason: 'tick_locked' };
+    return lastRun;
+  }
+  await runTick(env, cfg, ctx);
+  lastRun = { at: Date.now(), executed: true };
+  return lastRun;
+}
 
 async function runTick(env, cfg, ctx) {
   if (!cfg.treasury) return console.log('[selfsweep] 未配置 TREASURY，空转');

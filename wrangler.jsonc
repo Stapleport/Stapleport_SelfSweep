@@ -4,13 +4,19 @@
   "main": "src/worker.js",
   "compatibility_date": "2026-08-01",
 
-  // 零公网面：只有 cron 触发 + GET /health。归集 Worker 不需要任何入站路由。
+  // 显式空集=声明删远端旧 cron trigger；勿改回无字段（=未声明不删，残留双跑）。调度器统一调度后本服务不再自持 cron。
+  "triggers": { "crons": [] },
+
+  // 零公网面：只有调度器内部唤醒（service binding /internal/tick）+ GET /health。
+  // 归集 Worker 不需要任何公网入站路由。
   "workers_dev": false,
 
-  // 每 5 分钟一轮：监控到账（可选）→ 阈值判定 → imputationall 归集。想要更快改 "*/1"。
-  "triggers": {
-    "crons": ["*/5 * * * *"]
-  },
+  // 触发（2026-10-30 起）：全生态统一调度器 Stapleport_Scheduler 每 300s 经 service binding
+  // POST /internal/tick 唤醒（共享 secret INTERNAL_TICK_TOKEN，wrangler secret put；本地放
+  // .dev.vars）。唤醒 URL=https://<binding>.internal/internal/tick，路径必须 /internal/tick
+  // （host 段裸 internal 会解析成 /tick 的 404——生态实测案底）。每轮：监控到账（可选）→
+  // 阈值判定 → imputationall 归集。自有 crons 已删（账号 cron 名额释放）；scheduled handler
+  // 保留仅为 --test-scheduled 便利，生产永不触发。
 
   // 公开配置（非敏感）。密钥只有一把 SWEEP_PRIVATE_KEY，走 wrangler secret，绝不放这里：
   //   wrangler secret put SWEEP_PRIVATE_KEY

@@ -25,7 +25,7 @@ Where the official product has an executor sweep for you, SelfSweep lets you be 
 - **Fee-aware** — fee rates are read from the contract's `systeminfo()` every tick (never hardcoded), with a conservative profit pre-check for native-coin groups.
 - **Arrival monitor + webhook** (optional) — bind a KV namespace and every fresh deposit is detected (monotonic `received` baseline diff) and pushed to your webhook, along with sweep sent/confirmed/failed events. Stapleport's own production stays zero-KV (red line); this optional binding is for merchants' self-hosted deployments only.
 - **Stateless core** — no KV needed for sweeping: a failed transaction simply retries next tick. Zero bindings deploy and work.
-- **Zero public surface** — `workers_dev: false`, no inbound routes at all; the only trigger is the cron schedule.
+- **Zero public surface** — `workers_dev: false`, no public inbound routes at all. The only trigger is the unified scheduler (Stapleport_Scheduler) waking the worker every 5 minutes via service binding `POST /internal/tick` (shared secret `INTERNAL_TICK_TOKEN`; `GET /internal/tick` returns the last-run summary); a read-only `GET /health` remains. Self-hosting without the scheduler? Add your own `triggers.crons` — the `scheduled` handler is kept and works.
 - **Channel model identical to the web app** — channels are `secret-6-digit-number` orders (path = `keccak256`), the exact same convention as the Stapleport web frontend.
 
 ### How it works (each tick)
@@ -116,6 +116,7 @@ cp .dev.vars.example .dev.vars   # fill in your config (gitignored)
 npm run dev                      # wrangler dev --test-scheduled
 node scripts/dev-with-mnemonic.mjs   # same, but injects the public hardhat test key as SWEEP_PRIVATE_KEY via --var (local 31337 only; production uses wrangler secret put SWEEP_PRIVATE_KEY)
 curl "http://localhost:8787/__scheduled?cron=*+*+*+*+*"   # trigger one tick
+curl -X POST -H "x-internal-token: $INTERNAL_TICK_TOKEN" http://localhost:8787/internal/tick   # same, via the scheduler wakeup path (token from .dev.vars)
 curl http://localhost:8787/health                         # runtime status
 npm test                         # unit tests (config parsing, pure functions)
 ```
@@ -128,7 +129,7 @@ Two local-chain quirks: paying **native** into an *activated* channel triggers t
 
 ```
 ├── src/
-│   ├── worker.js          # entry: cron → tick; GET /health (local dev only)
+│   ├── worker.js          # entry: scheduler wakeup POST /internal/tick (scheduled kept for own cron / local dev) → tick; GET /health
 │   ├── config.js          # env → config (pure functions, empty-string tolerant)
 │   ├── monitor.js         # optional KV baseline-diff arrival detection
 │   ├── sweep.js           # balance → threshold → prechecks → sign → broadcast
@@ -152,7 +153,7 @@ Two local-chain quirks: paying **native** into an *activated* channel triggers t
 
 ### Free-tier Notes
 
-- One Worker on cron: well within the free tier (workers-free cron CPU is fine for sign-and-broadcast; the fee rates read + batch balance read are 2–3 subrequests per chain per tick).
+- One Worker woken every 5 minutes (scheduler service binding; self-hosted may add back `triggers.crons`): well within the free tier (sign-and-broadcast is fine within the free-tier CPU cap; the fee rates read + batch balance read are 2–3 subrequests per chain per tick).
 - Free KV has a daily write limit; the baseline is at most one write per chain per tick and only when something changed.
 - `TICK_LOCK_SECONDS` guards against overlapping ticks within one isolate; cross-isolate overlap is tolerated by design (worst case: a duplicate sweep attempt that finds an empty channel and does nothing).
 
@@ -177,7 +178,7 @@ Two local-chain quirks: paying **native** into an *activated* channel triggers t
 - **费率感知**：每 tick 现读合约 `systeminfo()`，绝不写死费率；原生币组带保守盈利预检。
 - **到账监控 + webhook**（可选）：绑定 KV 后，新到账（`received` 只增不减口径做基线差）即时推送 webhook，归集的发送/成功/失败也有事件。Stapleport 自家生产零 KV（红线），此绑定仅供商户自部署可选。
 - **核心无状态**：归集不依赖 KV——失败的交易下一 tick 自动重试；零绑定即可部署运行。
-- **零公网面**：`workers_dev: false`、没有任何入站路由，唯一触发方式是 cron。
+- **零公网面**：`workers_dev: false`、没有任何公网入站路由；唯一触发=全生态统一调度器（Stapleport_Scheduler）每 300s 经 service binding `POST /internal/tick` 唤醒（共享 secret `INTERNAL_TICK_TOKEN`；`GET /internal/tick` 只读返回最近一轮摘要），另有只读 `GET /health`。自部署不用调度器？自行加回 `triggers.crons`——`scheduled` handler 保留可用。
 - **通道模型与网页完全一致**：通道 = `密语-6位编号`（path = keccak256），与 Stapleport 网页端同一套约定。
 
 ### 每个 tick 做什么
@@ -264,6 +265,7 @@ cp .dev.vars.example .dev.vars   # 填配置（已 gitignore）
 npm run dev                      # wrangler dev --test-scheduled
 node scripts/dev-with-mnemonic.mjs   # 同上，但经 --var 注入公开 hardhat 测试键为 SWEEP_PRIVATE_KEY（仅本地 31337；生产走 wrangler secret put SWEEP_PRIVATE_KEY）
 curl "http://localhost:8787/__scheduled?cron=*+*+*+*+*"   # 手动触发一轮
+curl -X POST -H "x-internal-token: $INTERNAL_TICK_TOKEN" http://localhost:8787/internal/tick   # 同效，走调度器唤醒口（token 取自 .dev.vars）
 curl http://localhost:8787/health                         # 运行状态
 npm test                         # 单测（配置解析与纯函数）
 ```
@@ -276,7 +278,7 @@ npm test                         # 单测（配置解析与纯函数）
 
 ```
 ├── src/
-│   ├── worker.js          # 入口：cron → tick；GET /health（仅本地 dev）
+│   ├── worker.js          # 入口：调度器唤醒 POST /internal/tick（scheduled 保留供自部署 cron / 本地 dev）→ tick；GET /health
 │   ├── config.js          # env → 配置（纯函数，空串回落）
 │   ├── monitor.js         # 可选：KV 基线差到账检测
 │   ├── sweep.js           # 余额 → 阈值 → 预检 → 签名 → 广播
@@ -300,7 +302,7 @@ npm test                         # 单测（配置解析与纯函数）
 
 ### 免费额度与限制
 
-- 单 Worker + cron：免费版绰绰有余（每 tick 每链只需 2–3 个子请求：读费率 + 批量读余额 + 广播）。
+- 单 Worker 每 300s 一轮（调度器 service binding 唤醒；自部署可自行加回 `triggers.crons`）：免费版绰绰有余（每 tick 每链只需 2–3 个子请求：读费率 + 批量读余额 + 广播）。
 - 免费 KV 有每日写入限额；基线快照每链每 tick 最多一次写，且只在有变化时写。
 - `TICK_LOCK_SECONDS` 防同 isolate 重叠；跨 isolate 重叠在设计上可容忍（最坏情况：对已空通道重复发起一次归集，什么也扫不到）。
 
